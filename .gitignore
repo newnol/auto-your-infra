@@ -1,0 +1,15 @@
+# Ansible Vault
+ansible/vault_pass.txt
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+terraform.tfvars
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
