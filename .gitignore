@@ -1,5 +1,7 @@
 # Ansible Vault
 ansible/vault_pass.txt
+# Note: ansible/group_vars/all/secrets.yml is intentionally NOT ignored
+# as it contains encrypted Ansible Vault data which is safe to commit
 
 # Terraform
 .terraform/
@@ -13,4 +15,3 @@ Thumbs.db
 
 # Logs
 *.log
-ansible/group_vars/all/secrets.yml
