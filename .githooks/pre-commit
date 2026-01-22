@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# Pre-commit hook to check if secrets.yml is encrypted before allowing commit
+
+SECRETS_FILE="ansible/group_vars/all/secrets.yml"
+
+if [ -f "$SECRETS_FILE" ]; then
+    # Check if the file does NOT start with Ansible Vault header (i.e., it's decrypted/plain text)
+    if ! head -1 "$SECRETS_FILE" | grep -q "^\$ANSIBLE_VAULT"; then
+        echo "Error: $SECRETS_FILE appears to be decrypted. Please encrypt it before committing."
+        echo "Run: ansible-vault encrypt $SECRETS_FILE --vault-password-file ansible/vault_pass.txt"
+        exit 1
+    fi
+fi
+
+exit 0
