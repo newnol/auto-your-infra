@@ -1,0 +1,18 @@
+---
+- hosts: localhost
+  vars_files:
+    - ../group_vars/all/secrets.yml
+  tasks:
+    - name: Debug Proxmox API credentials
+      debug:
+        msg: "Proxmox API user: {{ proxmox_api_user }}, Password: {{ proxmox_api_pass }}"
+
+    - name: Example firewall config (placeholder)
+      debug:
+        msg: "Configuring firewall for port {{ nginx_port | default(8080) }}"
+      # In real setup, use firewalld module
+      # firewalld:
+      #   port: "{{ nginx_port | default(8080) }}/tcp"
+      #   permanent: yes
+      #   state: enabled
+      # become: yes

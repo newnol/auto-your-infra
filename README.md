@@ -30,15 +30,17 @@ homelab-infra/
 
 ## Ansible Vault Usage
 
-Ansible Vault is used to encrypt sensitive data like API credentials.
+Ansible Vault is used to encrypt sensitive data like API credentials. **Encrypted vault files are safe to commit to GitHub** since the content is encrypted and can only be decrypted with the vault password.
 
 ### Workflow
 
 1. **Create/Edit Vault File**:
    ```bash
-   ansible-vault create ansible/group_vars/all/secrets.yml
-   # Or edit existing:
-   ansible-vault edit ansible/group_vars/all/secrets.yml
+   # Create new vault file
+   ansible-vault create --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
+
+   # Edit existing vault file
+   ansible-vault edit --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
    ```
 
 2. **Run Playbook**:
@@ -50,12 +52,12 @@ Ansible Vault is used to encrypt sensitive data like API credentials.
 
 3. **View Encrypted File** (without decrypting):
    ```bash
-   ansible-vault view ansible/group_vars/all/secrets.yml
+   ansible-vault view --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
    ```
 
 4. **Change Vault Password**:
    ```bash
-   ansible-vault rekey ansible/group_vars/all/secrets.yml
+   ansible-vault rekey --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
    ```
 
 ### Example Secrets File

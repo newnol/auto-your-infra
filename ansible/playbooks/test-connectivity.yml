@@ -1,0 +1,42 @@
+---
+# Ansible Cheat Sheet: Test Proxmox Connectivity
+# This playbook tests basic SSH connectivity to Proxmox servers
+
+- name: Test connectivity to Proxmox servers
+  hosts: proxmox_servers
+  gather_facts: true  # This will test SSH connection and gather system info
+
+  tasks:
+    - name: Ping test (basic connectivity)
+      ping:
+
+    - name: Show system info
+      debug:
+        msg: |
+          Hostname: {{ ansible_hostname }}
+          Distribution: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Uptime: {{ ansible_uptime_seconds }} seconds
+
+    - name: Check if Proxmox is running (look for pve services)
+      command: systemctl is-active pvedaemon
+      register: pve_status
+      ignore_errors: true
+
+    - name: Show Proxmox service status
+      debug:
+        msg: "Proxmox VE Daemon status: {{ pve_status.stdout | default('not found') }}"
+
+# Usage:
+# 1. Update ansible/inventories/homelab.ini with your Proxmox server details
+# 2. Run: ansible-playbook -i ansible/inventories/homelab.ini ansible/playbooks/test-connectivity.yml
+
+# Example inventory (homelab.ini):
+# [proxmox_servers]
+# proxmox1 ansible_host=192.168.1.100 ansible_user=root
+# proxmox2 ansible_host=192.168.1.101 ansible_user=root
+
+# Ad-hoc commands for testing:
+# ansible -i ansible/inventories/homelab.ini proxmox_servers -m ping
+# ansible -i ansible/inventories/homelab.ini proxmox_servers -m command -a "uptime"
+# ansible -i ansible/inventories/homelab.ini proxmox_servers -m shell -a "pveversion"
