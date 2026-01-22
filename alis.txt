@@ -1,0 +1,5 @@
+ansible-vault view --vault-password-file=ansible/vault_pass.txt = av ansible/group_vars/all/secrets.yml
+
+
+alias ad='ansible-vault decrypt --vault-password-file=ansible/vault_pass.txt ansible/group_vars/all/secrets.yml'
+alias ae='ansible-vault encrypt --vault-password-file=ansible/vault_pass.txt ansible/group_vars/all/secrets.yml'
