@@ -1,0 +1,66 @@
+---
+- name: Configure newly provisioned VMs
+  hosts: webservers
+  become: true
+  gather_facts: true
+  
+  vars:
+    nginx_port: 80
+    firewall_ports:
+      - 22/tcp   # SSH
+      - 80/tcp   # HTTP
+      - 443/tcp  # HTTPS
+  
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+    
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - curl
+          - vim
+          - git
+        state: present
+    
+    - name: Start and enable nginx
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+    
+    - name: Configure firewall (ufw)
+      ufw:
+        rule: allow
+        port: "{{ item }}"
+      loop: "{{ firewall_ports }}"
+    
+    - name: Create custom index.html
+      copy:
+        content: |
+          <!DOCTYPE html>
+          <html>
+          <head>
+              <title>Welcome to {{ ansible_hostname }}</title>
+          </head>
+          <body>
+              <h1>Hello from {{ ansible_hostname }}!</h1>
+              <p>This server is managed by Ansible.</p>
+              <p>IP Address: {{ ansible_default_ipv4.address }}</p>
+              <p>OS: {{ ansible_distribution }} {{ ansible_distribution_version }}</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'
+      notify: restart nginx
+  
+  handlers:
+    - name: restart nginx
+      systemd:
+        name: nginx
+        state: restarted
