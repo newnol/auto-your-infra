@@ -1,0 +1,235 @@
+---
+# Homelab Infrastructure Configuration Playbook
+# This playbook configures the homelab infrastructure created by Terraform
+
+- name: Configure web servers
+  hosts: webservers
+  become: true
+  gather_facts: true
+  vars:
+    nginx_port: 80
+    nginx_ssl_port: 443
+    app_user: "www-data"
+    app_directory: "/var/www/html"
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: ['packages']
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - wget
+          - vim
+          - htop
+          - git
+          - ufw
+          - fail2ban
+        state: present
+      tags: ['packages']
+
+  roles:
+    - role: common
+      tags: ['common']
+    - role: nginx
+      tags: ['nginx']
+    - role: php
+      tags: ['php']
+    - role: monitoring
+      tags: ['monitoring']
+
+- name: Configure database servers
+  hosts: databases
+  become: true
+  gather_facts: true
+  vars:
+    mysql_root_password: "{{ vault_mysql_root_password | default('changeme123') }}"
+    mysql_databases:
+      - name: homelab_db
+        encoding: utf8mb4
+        collation: utf8mb4_unicode_ci
+    mysql_users:
+      - name: homelab_user
+        host: "%"
+        password: "{{ vault_mysql_user_password | default('changeme123') }}"
+        priv: "homelab_db.*:ALL"
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: ['packages']
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - wget
+          - vim
+          - htop
+          - git
+          - ufw
+          - fail2ban
+          - mysql-client
+        state: present
+      tags: ['packages']
+
+  roles:
+    - role: common
+      tags: ['common']
+    - role: mysql
+      tags: ['mysql']
+    - role: monitoring
+      tags: ['monitoring']
+
+- name: Configure monitoring servers
+  hosts: monitoring
+  become: true
+  gather_facts: true
+  vars:
+    prometheus_version: "2.45.0"
+    grafana_version: "10.2.0"
+    node_exporter_version: "1.6.1"
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: ['packages']
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - wget
+          - vim
+          - htop
+          - git
+          - ufw
+          - fail2ban
+          - apt-transport-https
+          - software-properties-common
+        state: present
+      tags: ['packages']
+
+  roles:
+    - role: common
+      tags: ['common']
+    - role: prometheus
+      tags: ['prometheus']
+    - role: grafana
+      tags: ['grafana']
+    - role: node_exporter
+      tags: ['node_exporter']
+
+- name: Configure reverse proxy containers
+  hosts: proxies
+  become: true
+  gather_facts: true
+  vars:
+    nginx_upstream_servers: "{{ groups['webservers'] | map('extract', hostvars, ['ansible_default_ipv4', 'address']) | list }}"
+    ssl_certificate_path: "/etc/ssl/certs/homelab.crt"
+    ssl_certificate_key_path: "/etc/ssl/private/homelab.key"
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: ['packages']
+
+    - name: Install required packages
+      apt:
+        name:
+          - curl
+          - wget
+          - vim
+          - htop
+          - git
+          - ufw
+          - fail2ban
+          - nginx
+          - certbot
+          - python3-certbot-nginx
+        state: present
+      tags: ['packages']
+
+  roles:
+    - role: common
+      tags: ['common']
+    - role: nginx_proxy
+      tags: ['nginx', 'proxy']
+    - role: letsencrypt
+      tags: ['ssl', 'letsencrypt']
+      when: enable_ssl | default(false)
+
+- name: Configure Proxmox hosts
+  hosts: proxmox_hosts
+  become: true
+  gather_facts: true
+  vars:
+    proxmox_backup_schedule: "daily"
+    proxmox_backup_retention: 7
+
+  pre_tasks:
+    - name: Update package cache
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      tags: ['packages']
+
+  roles:
+    - role: proxmox_host
+      tags: ['proxmox']
+
+- name: Run post-deployment tests
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Wait for services to be ready
+      wait_for:
+        host: "{{ item }}"
+        port: "{{ 80 if 'webservers' in group_names else 3306 if 'databases' in group_names else 9090 if 'monitoring' in group_names else 80 }}"
+        timeout: 300
+      loop: "{{ ansible_play_hosts_all }}"
+      when: ansible_play_hosts_all | length > 0
+      ignore_errors: true
+
+    - name: Test web server connectivity
+      uri:
+        url: "http://{{ item }}:80"
+        status_code: 200
+      loop: "{{ groups['webservers'] | default([]) }}"
+      ignore_errors: true
+      register: web_tests
+
+    - name: Test database connectivity
+      mysql_db:
+        login_host: "{{ item }}"
+        login_user: "homelab_user"
+        login_password: "{{ vault_mysql_user_password | default('changeme123') }}"
+        name: "homelab_db"
+        state: present
+      loop: "{{ groups['databases'] | default([]) }}"
+      ignore_errors: true
+      register: db_tests
+
+    - name: Display test results
+      debug:
+        msg: |
+          Web server tests: {{ web_tests.results | map(attribute='status') | list }}
+          Database tests: {{ db_tests.results | map(attribute='changed') | list }}
+
+    - name: Generate deployment report
+      template:
+        src: deployment_report.j2
+        dest: "deployment_report_{{ ansible_date_time.iso8601 }}.txt"
+      delegate_to: localhost
+      run_once: true
