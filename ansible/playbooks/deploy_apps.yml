@@ -5,14 +5,4 @@
   vars:
     ansible_python_interpreter: /usr/bin/python3
   tasks:
-    - name: "Example Task: Ensure app directory exists"
-      file:
-        path: "/opt/custom-app"
-        state: directory
-        mode: '0755'
-        
-    # Example: you would use community.docker.docker_compose_v2 to spin up an app
-    # - name: Deploy custom app stack
-    #   community.docker.docker_compose_v2:
-    #     project_src: /opt/custom-app
-    #     state: present
+    # Add application deployment tasks here

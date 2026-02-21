@@ -20,9 +20,7 @@ output "web_server_ip" {
   value       = module.web_server.ip_address_out
 }
 
-# 1️⃣ Infra Node (Control Plane / Core Services)
-# Chứa: DNS, Reverse Proxy, VPN, Monitoring, Auth, NTP, Internal CA
-# Đặc điểm: Nhẹ CPU, ít disk I/O, luôn hoạt động
+
 module "infra_node" {
   source           = "./modules/proxmox_lxc"
   node_name        = "host"
