@@ -88,3 +88,15 @@ variable "nesting" {
   type        = bool
   default     = false
 }
+
+variable "clone_vm_id" {
+  description = "Optional VM ID to clone from (e.g., a golden template). If set, OS template is ignored."
+  type        = number
+  default     = null
+}
+
+variable "default_password" {
+  description = "Default root password for initialized containers"
+  type        = string
+  sensitive   = true
+}

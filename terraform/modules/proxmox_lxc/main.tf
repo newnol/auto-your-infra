@@ -13,9 +13,19 @@ resource "proxmox_virtual_environment_container" "this" {
 
   description = var.description
 
-  operating_system {
-    template_file_id = var.template_file_id
-    type             = "ubuntu"
+  dynamic "clone" {
+    for_each = var.clone_vm_id != null ? [1] : []
+    content {
+      vm_id = var.clone_vm_id
+    }
+  }
+
+  dynamic "operating_system" {
+    for_each = var.clone_vm_id == null ? [1] : []
+    content {
+      template_file_id = var.template_file_id
+      type             = "unmanaged"
+    }
   }
 
   cpu {
@@ -57,7 +67,8 @@ resource "proxmox_virtual_environment_container" "this" {
     }
 
     user_account {
-      keys = [var.ssh_public_key]
+      keys     = [var.ssh_public_key]
+      password = var.default_password
     }
   }
 

@@ -38,3 +38,9 @@ variable "proxmox_node_name" {
     error_message = "Node must be 'asus', 'host', or 'thinkpad'."
   }
 }
+
+variable "default_password" {
+  description = "Default root password for initialized containers"
+  type        = string
+  sensitive   = true
+}

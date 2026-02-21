@@ -12,6 +12,7 @@ module "web_server" {
   ip_address       = "dhcp"
   dns_servers      = ["192.168.1.59", "1.1.1.1"]
   ssh_public_key   = trimspace(file(var.ssh_public_key))
+  default_password = var.default_password
   unprivileged     = true
   nesting          = true
 }
@@ -37,6 +38,7 @@ module "infra_node" {
   gateway          = "192.168.1.1"
   dns_servers      = ["1.1.1.1", "8.8.8.8"]
   ssh_public_key   = trimspace(file(var.ssh_public_key))
+  default_password = var.default_password
   unprivileged     = false
   nesting          = true
 }
@@ -62,6 +64,7 @@ module "monitor_node" {
   gateway          = "192.168.1.1"
   dns_servers      = ["192.168.1.59", "1.1.1.1"]
   ssh_public_key   = trimspace(file(var.ssh_public_key))
+  default_password = var.default_password
   unprivileged     = false
   nesting          = true
 }
@@ -70,3 +73,26 @@ output "monitor_node_ip" {
   description = "IP address of the Monitor Node container"
   value       = module.monitor_node.ip_address_out
 }
+
+
+module "ubuntu_base" {
+  source           = "./modules/proxmox_lxc"
+  node_name        = "host"
+  vm_id            = 900
+  hostname         = "ubuntu-base"
+  description      = "Golden Template (Ubuntu + Docker)"
+  template_file_id = var.lxc_template
+  cores            = 2
+  memory           = 2048
+  swap             = 512
+  disk_size        = 20
+  ip_address       = "192.168.1.62/24"
+  gateway          = "192.168.1.1"
+  dns_servers      = ["192.168.1.59", "1.1.1.1"]
+  ssh_public_key   = trimspace(file(var.ssh_public_key))
+  default_password = var.default_password
+  unprivileged     = true
+  nesting          = true
+}
+
+
