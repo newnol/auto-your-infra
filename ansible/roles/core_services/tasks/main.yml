@@ -1,0 +1,29 @@
+---
+- name: Ensure infrastructure services directory exists
+  file:
+    path: /opt/infra-services
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create required directories for AdGuard Home
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  loop:
+    - /opt/infra-services/adguard/work
+    - /opt/infra-services/adguard/conf
+
+- name: Copy docker-compose.yml for Core Services
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/infra-services/docker-compose.yml
+
+- name: Start Core Services with Docker Compose
+  community.docker.docker_compose_v2:
+    project_src: /opt/infra-services
+    state: present
