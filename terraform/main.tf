@@ -10,6 +10,7 @@ module "web_server" {
   swap             = 512
   disk_size        = 20
   ip_address       = "dhcp"
+  dns_servers      = ["192.168.1.59", "1.1.1.1"]
   ssh_public_key   = trimspace(file(var.ssh_public_key))
   unprivileged     = true
   nesting          = true
@@ -43,4 +44,29 @@ module "infra_node" {
 output "infra_node_ip" {
   description = "IP address of the Infra Node container"
   value       = module.infra_node.ip_address_out
+}
+
+
+module "monitor_node" {
+  source           = "./modules/proxmox_lxc"
+  node_name        = "host"
+  vm_id            = 117
+  hostname         = "monitor-node"
+  description      = "Observability Node (Prometheus/Grafana)"
+  template_file_id = var.lxc_template
+  cores            = 2
+  memory           = 2048
+  swap             = 512
+  disk_size        = 30
+  ip_address       = "192.168.1.61/24"
+  gateway          = "192.168.1.1"
+  dns_servers      = ["192.168.1.59", "1.1.1.1"]
+  ssh_public_key   = trimspace(file(var.ssh_public_key))
+  unprivileged     = false
+  nesting          = true
+}
+
+output "monitor_node_ip" {
+  description = "IP address of the Monitor Node container"
+  value       = module.monitor_node.ip_address_out
 }
