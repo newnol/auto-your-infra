@@ -24,7 +24,7 @@ resource "proxmox_virtual_environment_container" "this" {
     for_each = var.clone_vm_id == null ? [1] : []
     content {
       template_file_id = var.template_file_id
-      type             = "unmanaged"
+      type             = "ubuntu"
     }
   }
 
@@ -79,6 +79,12 @@ resource "proxmox_virtual_environment_container" "this" {
   }
 
   started = true
+
+  lifecycle {
+    ignore_changes = [
+      initialization[0].user_account[0].password,
+    ]
+  }
 }
 
 output "ip_address_out" {
