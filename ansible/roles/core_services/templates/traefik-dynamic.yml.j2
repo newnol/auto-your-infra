@@ -1,0 +1,45 @@
+http:
+  routers:
+    uptimekuma:
+      rule: "Host(`status.{{ root_domain | default('newnol.io.vn') }}`)"
+      entryPoints:
+        - websecure
+      service: uptimekuma
+      tls:
+        certResolver: cloudflare
+        domains:
+          - main: "{{ root_domain | default('newnol.io.vn') }}"
+            sans:
+              - "*.{{ root_domain | default('newnol.io.vn') }}"
+
+    adguard:
+      rule: "Host(`adguard.{{ root_domain | default('newnol.io.vn') }}`)"
+      entryPoints:
+        - websecure
+      service: adguard
+      tls:
+        certResolver: cloudflare
+
+    grafana:
+      rule: "Host(`grafana.{{ root_domain | default('newnol.io.vn') }}`)"
+      entryPoints:
+        - websecure
+      service: grafana
+      tls:
+        certResolver: cloudflare
+
+  services:
+    uptimekuma:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:3001"
+
+    adguard:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:3000"
+
+    grafana:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.61:3000"

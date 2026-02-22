@@ -24,6 +24,12 @@ variable "template_file_id" {
   type        = string
 }
 
+variable "os_type" {
+  description = "Operating system type for container initialization (e.g., debian, ubuntu)"
+  type        = string
+  default     = "debian"
+}
+
 variable "cores" {
   description = "Number of CPU cores"
   type        = number

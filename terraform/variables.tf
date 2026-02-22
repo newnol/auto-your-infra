@@ -25,7 +25,7 @@ variable "ssh_public_key" {
 variable "lxc_template" {
   description = "LXC template name in Proxmox"
   type        = string
-  default     = "local:vztmpl/ubuntu-24.04-standard_24.04-2_amd64.tar.zst"
+  default     = "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
 }
 
 variable "proxmox_node_name" {

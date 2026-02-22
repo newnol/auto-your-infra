@@ -23,6 +23,16 @@
     src: prometheus.yml.j2
     dest: /opt/monitoring/prometheus.yml
 
+- name: Copy Prometheus alert rules
+  template:
+    src: alerts.yml.j2
+    dest: /opt/monitoring/alerts.yml
+
+- name: Copy alertmanager.yml
+  template:
+    src: alertmanager.yml.j2
+    dest: /opt/monitoring/alertmanager.yml
+
 - name: Copy docker-compose.yml for Monitoring Stack
   template:
     src: docker-compose.yml.j2
@@ -30,5 +40,6 @@
 
 - name: Start Monitoring Stack with Docker Compose
   community.docker.docker_compose_v2:
+    docker_cli: /usr/bin/docker
     project_src: /opt/monitoring
     state: present

@@ -1,11 +1,11 @@
 # Homelab Infrastructure as Code (IaC)
 
-Welcome to the Homelab Infrastructure project. This repository uses **Terraform** to provision LXC containers on Proxmox, and **Ansible** to configure those containers and deploy Docker-based services.
+Welcome to the Homelab Infrastructure project. This repository uses **Terraform** to provision **VMs and LXC containers** on Proxmox, and **Ansible** to configure those nodes and deploy Docker-based services.
 
 ## 🏗 Architecture
 
 The project is divided into two main components:
-1. **Terraform (`/terraform`)**: Provisions the raw Proxmox LXC containers. It uses a reusable module (`modules/proxmox_lxc`) to make deploying new nodes effortless.
+1. **Terraform (`/terraform`)**: Provisions Proxmox VMs (`modules/proxmox_vm`) and LXC containers (`modules/proxmox_lxc`). Current setup: **infra-node** is a VM, **monitor-node** is an LXC.
 2. **Ansible (`/ansible`)**: Connects to the provisioned nodes to install base software (like Docker) and deploy containerized applications (Core Services, Web Apps, Databases).
 
 ---
@@ -19,7 +19,7 @@ If you want to spin up a new server (node) in your Homelab, follow these simple 
    ```bash
    cd terraform
    ```
-2. Open `main.tf` and add a new module block for your node. Example:
+2. Open `main.tf` and add a new module block for your node. Use `proxmox_vm` for a VM (like infra-node) or `proxmox_lxc` for an LXC (like monitor-node). Example for LXC:
    ```hcl
    module "app_node_01" {
      source           = "./modules/proxmox_lxc"
@@ -88,14 +88,25 @@ cd ansible
 ansible-vault edit group_vars/all/secrets.yml --vault-password-file vault_pass.txt
 ```
 
+**Variables used by Traefik and core services (store in `secrets.yml`):**
+- `cloudflare_api_token` — Cloudflare DNS API token (for ACME DNS challenge and Let's Encrypt).
+- `root_domain` — Your public domain (e.g. `selfhost.io.vn`). Used for `*.{{ root_domain }}` and router rules.
+
+**Terraform secret handling (do not hardcode in `terraform.tfvars`):**
+- Set `TF_VAR_proxmox_api_pass` in shell environment before running Terraform.
+- `TF_VAR_default_password` is read at runtime by `terraform/apply.sh` from Ansible Vault (`terraform_default_password`).
+- Example:
+  ```bash
+  export TF_VAR_proxmox_api_pass='***'
+  cd terraform && ./apply.sh
+  ```
+
 ---
 
-## 🛠 Core Services Included
+## 🛠 Architecture & Active Services
 
-The `infra_node` (CT 113) runs the following stack natively through Docker using `network_mode: host`:
-- **Traefik**: Reverse Proxy handling routing and SSL.
-- **Adguard Home**: Network-wide DNS server and ad-blocker (Port 53, UI on Port 3000).
-- **Tailscale**: Zero Trust VPN connectivity.
-- **Uptime Kuma**: Monitoring and alerting (Port 3001).
+The Homelab architecture is spread across specialized Proxmox nodes (infra-node as VM, monitor-node as LXC). All incoming web traffic is securely routed through a central Traefik ingress point handling Let's Encrypt Wildcard SSL certificates (domain and Cloudflare API token are configured via Ansible Vault; see [Managing Secrets](#-managing-secrets)).
 
-*(Because of Proxmox LXC AppArmor restrictions, the core services bypass Docker's bridge networking to easily control the required privileged ports without sysctl errors).*
+👉 **[View the complete Homelab Services Catalog & Network Map](docs/services.md)**
+
+*(Note: Because of Proxmox LXC AppArmor restrictions, core services bypass Docker's bridge networking using `network_mode: host` to easily control the required privileged ports without sysctl conflicts).*

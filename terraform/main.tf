@@ -1,98 +1,48 @@
-module "web_server" {
-  source           = "./modules/proxmox_lxc"
-  node_name        = var.proxmox_node_name
-  vm_id            = 112
-  hostname         = "web-server-01"
-  description      = "Web server LXC container managed by Terraform"
-  template_file_id = var.lxc_template
-  cores            = 2
-  memory           = 2048
-  swap             = 512
-  disk_size        = 20
-  ip_address       = "dhcp"
-  dns_servers      = ["192.168.1.59", "1.1.1.1"]
-  ssh_public_key   = trimspace(file(var.ssh_public_key))
-  default_password = var.default_password
-  unprivileged     = true
-  nesting          = true
-}
-
-output "web_server_ip" {
-  description = "IP address of the web server container"
-  value       = module.web_server.ip_address_out
-}
-
-
 module "infra_node" {
-  source           = "./modules/proxmox_lxc"
-  node_name        = "host"
-  vm_id            = 113
-  hostname         = "infra-node"
-  description      = "Infra Node (Control Plane / Core Services)"
-  template_file_id = var.lxc_template
-  cores            = 2
-  memory           = 2048
-  swap             = 512
-  disk_size        = 20
-  ip_address       = "192.168.1.59/24"
-  gateway          = "192.168.1.1"
-  dns_servers      = ["1.1.1.1", "8.8.8.8"]
-  ssh_public_key   = trimspace(file(var.ssh_public_key))
-  default_password = var.default_password
-  unprivileged     = false
-  nesting          = true
+  source         = "./modules/proxmox_vm"
+  node_name      = var.proxmox_node_name
+  vm_id          = 213
+  hostname       = "infra-node-vm"
+  template_vm_id = 9001
+
+  cores     = 1
+  memory    = 1536
+  disk_size = 16
+
+  ip_address     = "192.168.1.59/24"
+  gateway        = "192.168.1.1"
+  ssh_public_key = trimspace(file(var.ssh_public_key))
 }
 
 output "infra_node_ip" {
-  description = "IP address of the Infra Node container"
+  description = "IP address of the Infra Node VM"
   value       = module.infra_node.ip_address_out
 }
 
 
 module "monitor_node" {
-  source           = "./modules/proxmox_lxc"
-  node_name        = "host"
-  vm_id            = 117
-  hostname         = "monitor-node"
-  description      = "Observability Node (Prometheus/Grafana)"
+  source = "./modules/proxmox_lxc"
+  node_name = var.proxmox_node_name
+  vm_id     = 217
+  hostname  = "monitor-node"
+
   template_file_id = var.lxc_template
-  cores            = 2
-  memory           = 2048
-  swap             = 512
-  disk_size        = 30
-  ip_address       = "192.168.1.61/24"
-  gateway          = "192.168.1.1"
-  dns_servers      = ["192.168.1.59", "1.1.1.1"]
-  ssh_public_key   = trimspace(file(var.ssh_public_key))
+  os_type          = "debian"
+  cores            = 1
+  memory           = 1536
+  disk_size        = 15
+
+  ip_address     = "192.168.1.61/24"
+  gateway        = "192.168.1.1"
+  ssh_public_key = trimspace(file(var.ssh_public_key))
+
+  unprivileged = true
+  nesting      = true
+
   default_password = var.default_password
-  unprivileged     = false
-  nesting          = true
 }
 
 output "monitor_node_ip" {
-  description = "IP address of the Monitor Node container"
-  value       = module.monitor_node.ip_address_out
+  description = "IP address of the Monitor Node LXC"
+  value       = split("/", module.monitor_node.ip_address_out)[0]
 }
-
-
-module "ubuntu_base" {
-  source           = "./modules/proxmox_lxc"
-  node_name        = "host"
-  vm_id            = 900
-  hostname         = "ubuntu-base"
-  description      = "Golden Template (Ubuntu + Docker)"
-  template_file_id = var.lxc_template
-  cores            = 2
-  memory           = 2048
-  swap             = 512
-  disk_size        = 20
-  ip_address       = "192.168.1.62/24"
-  gateway          = "192.168.1.1"
-  dns_servers      = ["192.168.1.59", "1.1.1.1"]
-  ssh_public_key   = trimspace(file(var.ssh_public_key))
-  default_password = var.default_password
-  unprivileged     = true
-  nesting          = true
-}
-
-

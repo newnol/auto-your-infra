@@ -24,7 +24,7 @@ resource "proxmox_virtual_environment_container" "this" {
     for_each = var.clone_vm_id == null ? [1] : []
     content {
       template_file_id = var.template_file_id
-      type             = "ubuntu"
+      type             = var.os_type
     }
   }
 

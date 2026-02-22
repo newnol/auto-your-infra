@@ -23,6 +23,11 @@
     src: docker-compose.yml.j2
     dest: /opt/infra-services/docker-compose.yml
 
+- name: Copy traefik-dynamic.yml for Core Services
+  template:
+    src: traefik-dynamic.yml.j2
+    dest: /opt/infra-services/traefik-dynamic.yml
+
 - name: Start Core Services with Docker Compose
   community.docker.docker_compose_v2:
     project_src: /opt/infra-services
