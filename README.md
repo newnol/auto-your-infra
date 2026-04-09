@@ -1,6 +1,6 @@
-# devops-cloud-library
+# auto-your-infra
 
-This repository serves as a centralized library for Infrastructure as Code (IaC), focusing primarily on Ansible playbooks, roles, and configurations. It follows best practices for structure, security, and reusability.
+This repository serves as a centralized library for Infrastructure as Code (IaC) and automation scripts. It focuses on automating infrastructure deployments across platforms like AWS, DigitalOcean, and Proxmox using Ansible playbooks, roles, and configurations. It follows best practices for structure, security, and reusability.
 
 ## Directory Structure
 
