@@ -1,0 +1,88 @@
+---
+- name: Setup K3s Control Plane
+  hosts: k3s_master
+  become: yes
+  tasks:
+    - name: Set Hostname
+      hostname:
+        name: k3s-control-plane
+
+    - name: Create K3s config directory
+      file:
+        path: /etc/rancher/k3s
+        state: directory
+        mode: '0755'
+
+    - name: Create K3s config.yaml
+      copy:
+        dest: /etc/rancher/k3s/config.yaml
+        content: |
+          node-name: k3s-control-plane
+          write-kubeconfig-mode: "600"
+          tls-san:
+            - 134.209.105.198
+          disable:
+            - traefik
+            - servicelb
+          secrets-encryption: true
+          secrets-encryption-provider: secretbox
+        mode: '0644'
+
+    - name: Install K3s Server
+      shell: curl -sfL https://get.k3s.io | sh -
+      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Wait for K3s node to be ready
+      command: k3s kubectl get nodes
+      register: k3s_status
+      until: k3s_status.rc == 0
+      retries: 10
+      delay: 5
+
+    - name: Taint control-plane node (NoSchedule)
+      command: k3s kubectl taint nodes k3s-control-plane node-role.kubernetes.io/control-plane=true:NoSchedule --overwrite
+      ignore_errors: yes
+
+    - name: Get K3s Node Token
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: k3s_token
+
+    - name: Store K3s Token as Fact
+      set_fact:
+        cluster_token: "{{ k3s_token['content'] | b64decode | trim }}"
+
+- name: Setup K3s Workers
+  hosts: k3s_workers
+  become: yes
+  tasks:
+    - name: Set Hostname for Worker 1
+      hostname:
+        name: k3s-worker-1
+      when: inventory_hostname == 'k3s-worker-1'
+
+    - name: Set Hostname for Worker 2
+      hostname:
+        name: k3s-worker-2
+      when: inventory_hostname == 'k3s-worker-2'
+
+    - name: Create K3s config directory
+      file:
+        path: /etc/rancher/k3s
+        state: directory
+        mode: '0755'
+
+    - name: Create K3s worker config.yaml
+      copy:
+        dest: /etc/rancher/k3s/config.yaml
+        content: |
+          server: https://134.209.105.198:6443
+          token: {{ hostvars['k3s-control-plane']['cluster_token'] }}
+          node-name: {{ inventory_hostname }}
+        mode: '0644'
+
+    - name: Install K3s Agent
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="agent" sh -
+      args:
+        creates: /usr/local/bin/k3s-agent
