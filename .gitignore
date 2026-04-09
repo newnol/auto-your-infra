@@ -1,7 +1,13 @@
-# Ansible Vault
-ansible/vault_pass.txt
-# Note: ansible/group_vars/all/secrets.yml is intentionally NOT ignored
-# as it contains encrypted Ansible Vault data which is safe to commit
+# Ansible
+inventory.ini
+*.retry
+.vault_pass
+vault_pass.txt
+ansible/inventory/inventory.ini
+
+# SSH keys
+*.pem
+*.key
 
 # Terraform
 .terraform/

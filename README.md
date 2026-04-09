@@ -1,85 +1,38 @@
-# Homelab Infrastructure
+# devops-cloud-library
 
-This project sets up a homelab infrastructure using Terraform, Proxmox, and Ansible.
+This repository serves as a centralized library for Infrastructure as Code (IaC), focusing primarily on Ansible playbooks, roles, and configurations. It follows best practices for structure, security, and reusability.
 
-## Project Structure
+## Directory Structure
 
-```
-homelab-infra/
-├── ansible/
-│   ├── inventories/
-│   │   ├── homelab.ini
-│   │   └── prod.ini
-│   ├── playbooks/
-│   │   └── network-setup.yml
-│   ├── group_vars/
-│   │   └── all/
-│   │       └── secrets.yml  # Encrypted with Ansible Vault
-│   ├── roles/
-│   └── vault_pass.txt  # Vault password file (change this!)
-├── terraform/
-│   └── main.tf
-├── docs/
-│   └── architecture.md
-├── scripts/
-│   ├── backup.sh
-│   └── restore.sh
-├── .gitignore
-└── README.md
-```
-
-## Ansible Vault Usage
-
-Ansible Vault is used to encrypt sensitive data like API credentials. **Encrypted vault files are safe to commit to GitHub** since the content is encrypted and can only be decrypted with the vault password.
-
-### Workflow
-
-1. **Create/Edit Vault File**:
-   ```bash
-   # Create new vault file
-   ansible-vault create --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
-
-   # Edit existing vault file
-   ansible-vault edit --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
-   ```
-
-2. **Run Playbook**:
-   ```bash
-   ansible-playbook ansible/playbooks/network-setup.yml --ask-vault-pass
-   # Or use password file:
-   ansible-playbook ansible/playbooks/network-setup.yml --vault-password-file ansible/vault_pass.txt
-   ```
-
-3. **View Encrypted File** (without decrypting):
-   ```bash
-   ansible-vault view --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
-   ```
-
-4. **Change Vault Password**:
-   ```bash
-   ansible-vault rekey --vault-password-file ansible/vault_pass.txt ansible/group_vars/all/secrets.yml
-   ```
-
-### Example Secrets File
-
-```yaml
----
-proxmox_api_user: "root@pam"
-proxmox_api_pass: "your_proxmox_password"
-db_password: "supersecret"
-```
-
-### CI/CD Integration
-
-For automated deployments, use `--vault-id` with a secrets manager or password file.
+- `/ansible/playbooks/` - Contains executable Ansible playbooks (`.yml`).
+- `/ansible/inventory/` - Stores inventory files (excluded from version control to prevent credential leakage).
+- `/ansible/roles/` - Reusable Ansible roles.
+- `/ansible/ansible.cfg` - Standard Ansible configuration.
 
 ## Getting Started
 
-1. Update `ansible/group_vars/all/secrets.yml` with your actual credentials.
-2. Change the vault password in `ansible/vault_pass.txt`.
-3. Run Terraform: `cd terraform && terraform apply`
-4. Run Ansible: `ansible-playbook ansible/playbooks/network-setup.yml --vault-password-file ansible/vault_pass.txt`
+### 1. Setup Inventory
 
-## Backup and Restore
+Copy the example inventory template to create your actual inventory file:
 
-Use the scripts in `scripts/` directory for backup and restore operations.
+```bash
+cp ansible/inventory/inventory.example.ini ansible/inventory/inventory.ini
+```
+
+**Important**: Fill in your real IP addresses, usernames, and passwords inside `ansible/inventory/inventory.ini`. This file is ignored by Git and will not be committed.
+
+### 2. Run a Playbook
+
+Navigate to the `ansible` directory and run a playbook using the `ansible-playbook` command. The configuration in `ansible.cfg` will automatically point to the correct inventory file.
+
+```bash
+cd ansible
+ansible-playbook playbooks/test-connectivity.yml
+```
+
+*(You can replace `test-connectivity.yml` with the playbook you intend to run)*
+
+## Security Notes
+
+- The `.gitignore` at the root is strictly configured to ensure sensitive files like `inventory.ini`, `.vault_pass`, `*.retry`, and any `.pem`/`.key` SSH keys are **never** accidentally committed.
+- Never hardcode real IPs, SSH keys, or passwords directly in playbooks or tracked files. Always use variables referencing the `inventory.ini` or encrypted using Ansible Vault.
