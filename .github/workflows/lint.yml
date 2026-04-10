@@ -9,6 +9,7 @@ on:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-python-version: '3.12'
+          python-version: '3.12'
 
       - name: Install dependencies
         run: |
@@ -27,7 +28,7 @@ jobs:
         run: yamllint .
 
       - name: Run ansible-lint
-        run: ansible-lint ansible/playbooks/*.yml
+        run: ansible-lint ansible/playbooks/
 
       - name: Terraform Lint
         uses: terraform-linters/setup-tflint@v4
@@ -35,4 +36,5 @@ jobs:
           tflint_version: v0.50.0
 
       - name: Run TFLint
-        run: tflint -r
+        working-directory: terraform
+        run: tflint --init && tflint
