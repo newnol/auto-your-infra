@@ -7,6 +7,9 @@ name: IaC Lint
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   yamllint:
     name: yamllint
@@ -78,9 +81,5 @@ jobs:
         working-directory: terraform/
 
       - name: Terraform Validate
-        run: |
-          terraform validate \
-            -var="proxmox_api_url=https://example.com:8006/api2/json" \
-            -var="proxmox_api_user=root@pam" \
-            -var="proxmox_api_pass=placeholder"
+        run: terraform validate
         working-directory: terraform/
