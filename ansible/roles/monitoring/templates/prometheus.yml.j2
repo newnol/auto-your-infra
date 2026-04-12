@@ -20,7 +20,6 @@ scrape_configs:
       - targets: ['127.0.0.1:9100']
         labels:
           instance: 'monitor-node'
-      # Future nodes can be added here, e.g.,
-      # - targets: ['192.168.1.59:9100']
-      #   labels:
-      #     instance: 'infra-node'
+      - targets: ['192.168.1.62:9100']
+        labels:
+          instance: 'app-node'

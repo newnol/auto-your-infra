@@ -1,0 +1,60 @@
+---
+- name: Ensure AI services directory exists
+  file:
+    path: /opt/ai-services
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create data directories for AI services
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0777'
+  loop:
+    - /opt/ai-services/data/postgres
+    - /opt/ai-services/data/redis
+    - /opt/ai-services/data/n8n
+    - /opt/ai-services/data/qdrant
+    - /opt/ai-services/data/dify/storage
+    - /opt/ai-services/data/firecrawl
+
+- name: Create SearXNG config directory
+  file:
+    path: /opt/ai-services/searxng
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Copy SearXNG settings
+  template:
+    src: searxng-settings.yml.j2
+    dest: /opt/ai-services/searxng/settings.yml
+    mode: '0644'
+
+- name: Copy Dify nginx config
+  template:
+    src: dify-nginx.conf.j2
+    dest: /opt/ai-services/dify-nginx.conf
+    mode: '0644'
+
+- name: Copy database init script
+  template:
+    src: init-databases.sh.j2
+    dest: /opt/ai-services/init-databases.sh
+    mode: '0755'
+
+- name: Copy docker-compose.yml for AI Services
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/ai-services/docker-compose.yml
+
+- name: Start AI Services with Docker Compose
+  community.docker.docker_compose_v2:
+    docker_cli: /usr/bin/docker
+    project_src: /opt/ai-services
+    state: present

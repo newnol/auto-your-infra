@@ -1,8 +1,8 @@
 ---
-- name: Deploy Application Services
-  hosts: apps
+- name: Deploy AI Self-Hosted Services
+  hosts: ai
   become: true
   vars:
     ansible_python_interpreter: /usr/bin/python3
   roles:
-    - app_services
+    - ai_services

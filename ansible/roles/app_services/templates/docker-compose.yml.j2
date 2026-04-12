@@ -1,0 +1,129 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: app-postgres
+    restart: unless-stopped
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh:ro
+    environment:
+      POSTGRES_USER: homelab
+      POSTGRES_PASSWORD: "{{ app_db_password }}"
+      POSTGRES_DB: homelab
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U homelab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: app-redis
+    restart: unless-stopped
+    volumes:
+      - ./data/redis:/data
+    networks:
+      - app-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  forgejo:
+    image: codeberg.org/forgejo/forgejo:9
+    container_name: forgejo
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+      - "222:22"
+    volumes:
+      - ./data/forgejo:/data
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      USER_UID: "1000"
+      USER_GID: "1000"
+      FORGEJO__database__DB_TYPE: postgres
+      FORGEJO__database__HOST: postgres:5432
+      FORGEJO__database__NAME: forgejo
+      FORGEJO__database__USER: homelab
+      FORGEJO__database__PASSWD: "{{ app_db_password }}"
+      FORGEJO__server__DOMAIN: "git.{{ root_domain }}"
+      FORGEJO__server__ROOT_URL: "https://git.{{ root_domain }}/"
+      FORGEJO__server__SSH_DOMAIN: "git.{{ root_domain }}"
+      FORGEJO__server__SSH_PORT: "222"
+      FORGEJO__server__SSH_LISTEN_PORT: "22"
+      FORGEJO__security__SECRET_KEY: "{{ forgejo_secret_key }}"
+    networks:
+      - app-net
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5678:5678"
+    volumes:
+      - ./data/n8n:/home/node/.n8n
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: "5432"
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: homelab
+      DB_POSTGRESDB_PASSWORD: "{{ app_db_password }}"
+      N8N_HOST: "0.0.0.0"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: https
+      WEBHOOK_URL: "https://n8n.{{ root_domain }}/"
+      N8N_ENCRYPTION_KEY: "{{ n8n_encryption_key }}"
+    networks:
+      - app-net
+
+  docmost:
+    image: docmost/docmost:latest
+    container_name: docmost
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "3001:3000"
+    environment:
+      DATABASE_URL: "postgresql://homelab:{{ app_db_password }}@postgres:5432/docmost?sslmode=disable"
+      REDIS_URL: "redis://redis:6379"
+      APP_URL: "https://docs.{{ root_domain }}"
+      APP_SECRET: "{{ docmost_app_secret }}"
+    networks:
+      - app-net
+
+  node_exporter:
+    image: prom/node-exporter:latest
+    container_name: node_exporter
+    restart: unless-stopped
+    network_mode: "host"
+    pid: "host"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - "--path.procfs=/host/proc"
+      - "--path.rootfs=/rootfs"
+      - "--path.sysfs=/host/sys"
+      - "--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)"
+
+networks:
+  app-net:
+    driver: bridge

@@ -1,0 +1,39 @@
+---
+- name: Ensure app services directory exists
+  file:
+    path: /opt/app-services
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create data directories for app services
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0777'
+  loop:
+    - /opt/app-services/data/postgres
+    - /opt/app-services/data/redis
+    - /opt/app-services/data/forgejo
+    - /opt/app-services/data/n8n
+    - /opt/app-services/data/docmost
+
+- name: Copy database init script
+  template:
+    src: init-databases.sh.j2
+    dest: /opt/app-services/init-databases.sh
+    mode: '0755'
+
+- name: Copy docker-compose.yml for App Services
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/app-services/docker-compose.yml
+
+- name: Start App Services with Docker Compose
+  community.docker.docker_compose_v2:
+    docker_cli: /usr/bin/docker
+    project_src: /opt/app-services
+    state: present

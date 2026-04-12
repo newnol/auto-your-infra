@@ -28,6 +28,38 @@ http:
       tls:
         certResolver: cloudflare
 
+    n8n:
+      rule: "Host(`n8n.{{ root_domain | default('newnol.io.vn') }}`)"
+      entryPoints:
+        - websecure
+      service: n8n
+      tls:
+        certResolver: cloudflare
+
+    searxng:
+      rule: "Host(`search.{{ root_domain | default('newnol.io.vn') }}`)"
+      entryPoints:
+        - websecure
+      service: searxng
+      tls:
+        certResolver: cloudflare
+
+    langfuse:
+      rule: "Host(`langfuse.{{ root_domain | default('newnol.io.vn') }}`)"
+      entryPoints:
+        - websecure
+      service: langfuse
+      tls:
+        certResolver: cloudflare
+
+    dify:
+      rule: "Host(`dify.{{ root_domain | default('newnol.io.vn') }}`)"
+      entryPoints:
+        - websecure
+      service: dify
+      tls:
+        certResolver: cloudflare
+
   services:
     uptimekuma:
       loadBalancer:
@@ -43,3 +75,23 @@ http:
       loadBalancer:
         servers:
           - url: "http://192.168.1.61:3000"
+
+    n8n:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.62:5678"
+
+    searxng:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.62:8080"
+
+    langfuse:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.62:3003"
+
+    dify:
+      loadBalancer:
+        servers:
+          - url: "http://192.168.1.62:3004"

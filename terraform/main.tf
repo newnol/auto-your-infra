@@ -46,3 +46,25 @@ output "monitor_node_ip" {
   description = "IP address of the Monitor Node LXC"
   value       = split("/", module.monitor_node.ip_address_out)[0]
 }
+
+
+module "app_node" {
+  source         = "./modules/proxmox_vm"
+  node_name      = var.proxmox_node_name
+  vm_id          = 215
+  hostname       = "app-node"
+  template_vm_id = 9001
+
+  cores     = 4
+  memory    = 8192
+  disk_size = 50
+
+  ip_address     = "192.168.1.62/24"
+  gateway        = "192.168.1.1"
+  ssh_public_key = trimspace(file(var.ssh_public_key))
+}
+
+output "app_node_ip" {
+  description = "IP address of the App Node VM"
+  value       = module.app_node.ip_address_out
+}
