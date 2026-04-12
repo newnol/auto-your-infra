@@ -32,7 +32,32 @@ ansible-playbook playbooks/test-connectivity.yml
 
 *(You can replace `test-connectivity.yml` with the playbook you intend to run)*
 
+## Terraform Stacks
+
+- `terraform/` contains the main Terraform root for the existing infrastructure.
+- `terraform/digitalocean/` is a separate Terraform root for DigitalOcean resources with its own state and local env file.
+
+### DigitalOcean Quick Start
+
+```bash
+cd terraform/digitalocean
+cp .do.env.example .do.env
+cp terraform.tfvars.example terraform.tfvars
+```
+
+Set `DIGITALOCEAN_TOKEN` in `.do.env`, set a real SSH key fingerprint or key ID in `terraform.tfvars`, then run:
+
+```bash
+set -a
+source .do.env
+set +a
+terraform init
+terraform plan
+terraform apply
+```
+
 ## Security Notes
 
 - The `.gitignore` at the root is strictly configured to ensure sensitive files like `inventory.ini`, `.vault_pass`, `*.retry`, and any `.pem`/`.key` SSH keys are **never** accidentally committed.
 - Never hardcode real IPs, SSH keys, or passwords directly in playbooks or tracked files. Always use variables referencing the `inventory.ini` or encrypted using Ansible Vault.
+- Keep `terraform/digitalocean/.do.env`, `terraform.tfvars`, and `terraform.tfstate` local only.
