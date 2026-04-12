@@ -8,6 +8,13 @@ The project is divided into two main components:
 1. **Terraform (`/terraform`)**: Provisions Proxmox VMs (`modules/proxmox_vm`) and LXC containers (`modules/proxmox_lxc`). Current setup: **infra-node** is a VM, **monitor-node** is an LXC.
 2. **Ansible (`/ansible`)**: Connects to the provisioned nodes to install base software (like Docker) and deploy containerized applications (Core Services, Web Apps, Databases).
 
+## Repository Layout
+
+- `terraform/`: Main Proxmox stack for homelab nodes and modules.
+- `terraform/digitalocean/`: Separate Terraform root for DigitalOcean resources with independent state.
+- `ansible/`: Inventory, playbooks, and roles for post-provisioning and service deployment.
+- `docs/`: Service catalog, network notes, and operational documentation.
+
 ---
 
 ## 🚀 Quick Start Guide: How to deploy a new Node
@@ -95,6 +102,7 @@ ansible-vault edit group_vars/all/secrets.yml --vault-password-file vault_pass.t
 **Terraform secret handling (do not hardcode in `terraform.tfvars`):**
 - Set `TF_VAR_proxmox_api_pass` in shell environment before running Terraform.
 - `TF_VAR_default_password` is read at runtime by `terraform/apply.sh` from Ansible Vault (`terraform_default_password`).
+- `DIGITALOCEAN_TOKEN` should be loaded from `terraform/digitalocean/.do.env` for the DigitalOcean stack.
 - Example:
   ```bash
   export TF_VAR_proxmox_api_pass='***'

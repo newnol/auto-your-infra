@@ -1,0 +1,13 @@
+droplet_name = "do-app-1"
+region       = "sgp1"
+size         = "s-1vcpu-1gb"
+image        = "ubuntu-24-04-x64"
+
+ssh_key_ids = [
+  "your-digitalocean-ssh-key-fingerprint",
+]
+
+tags = [
+  "homelab",
+  "digitalocean",
+]

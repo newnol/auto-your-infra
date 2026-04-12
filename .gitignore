@@ -8,6 +8,8 @@ ansible/vault_pass.txt
 *.tfstate
 *.tfstate.backup
 *.tfstate.*.backup
+*.tfvars
+*.auto.tfvars
 terraform.tfvars
 
 # Ignore duplicate ansible vault locations generated during experiments
@@ -22,3 +24,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+#Credentials
+.env
+terraform/digitalocean/.do.env
