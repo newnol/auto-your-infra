@@ -25,7 +25,7 @@ variable "ssh_public_key" {
 variable "lxc_template" {
   description = "LXC template name in Proxmox"
   type        = string
-  default     = "local:vztmpl/ubuntu-22.04-standard_22.04-1_amd64.tar.zst"
+  default     = "local:vztmpl/debian-12-standard_12.12-1_amd64.tar.zst"
 }
 
 variable "proxmox_node_name" {
@@ -34,7 +34,13 @@ variable "proxmox_node_name" {
   default     = "asus"
 
   validation {
-    condition     = var.proxmox_node_name == "asus"
-    error_message = "For safety, containers can only be deployed on node 'asus'."
+    condition     = contains(["asus", "host", "thinkpad"], var.proxmox_node_name)
+    error_message = "Node must be 'asus', 'host', or 'thinkpad'."
   }
+}
+
+variable "default_password" {
+  description = "Default root password for initialized containers"
+  type        = string
+  sensitive   = true
 }

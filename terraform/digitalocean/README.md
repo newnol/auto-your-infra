@@ -6,6 +6,7 @@ This stack is intentionally separated from the main `terraform/` directory so it
 
 This stack reads the token directly from the `DIGITALOCEAN_TOKEN` environment variable, so there is no token field in the `.tf` files.
 
+Do not `source` the repo root `.env` if it contains anything other than environment variable assignments.
 Create a local file from the example and keep it out of git:
 
 ```bash
