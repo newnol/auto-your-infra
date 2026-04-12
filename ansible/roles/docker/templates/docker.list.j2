@@ -1,0 +1,1 @@
+deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/{{ 'debian' if ansible_distribution == 'Debian' else 'ubuntu' }} {{ ansible_distribution_release }} stable

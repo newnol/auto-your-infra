@@ -1,0 +1,68 @@
+services:
+  traefik:
+    image: traefik:v3.1
+    container_name: traefik
+    restart: unless-stopped
+    network_mode: "host"
+    security_opt:
+      - no-new-privileges:true
+      - apparmor:unconfined
+    environment:
+      - CF_DNS_API_TOKEN={{ cloudflare_api_token }}
+    volumes:
+      - ./letsencrypt:/letsencrypt
+      - ./traefik-dynamic.yml:/etc/traefik/dynamic.yml:ro
+    cap_add:
+      - NET_BIND_SERVICE
+    command:
+      - "--api.dashboard=false"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+      # Global HTTP to HTTPS Redirection
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      # Let's Encrypt Cloudflare DNS Challenge Configure
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge=true"
+      - "--certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.cloudflare.acme.email=tantai@newnol.io.vn"
+      - "--certificatesresolvers.cloudflare.acme.storage=/letsencrypt/acme.json"
+
+  adguardhome:
+    image: adguard/adguardhome
+    container_name: adguardhome
+    restart: unless-stopped
+    security_opt:
+      - apparmor:unconfined
+    network_mode: "host"
+    volumes:
+      - ./adguard/work:/opt/adguardhome/work
+      - ./adguard/conf:/opt/adguardhome/conf
+
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    hostname: infra-node
+    security_opt:
+      - apparmor:unconfined
+    network_mode: "host"
+    environment:
+      - TS_STATE_DIR=/var/lib/tailscale
+      # - TS_AUTHKEY=<ADD_YOUR_AUTH_KEY_HERE>
+    volumes:
+      - ./tailscale/state:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - net_raw
+    restart: unless-stopped
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    security_opt:
+      - apparmor:unconfined
+    network_mode: "host"
+    volumes:
+      - ./uptime-kuma/data:/app/data
+    restart: unless-stopped

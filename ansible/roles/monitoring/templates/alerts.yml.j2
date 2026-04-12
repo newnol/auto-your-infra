@@ -1,0 +1,29 @@
+groups:
+  - name: homelab.rules
+    rules:
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus target down ({% raw %}{{ $labels.instance }}{% endraw %})"
+          description: "Target {% raw %}{{ $labels.job }}{% endraw %}/{% raw %}{{ $labels.instance }}{% endraw %} is unreachable for more than 2 minutes."
+
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage ({% raw %}{{ $labels.instance }}{% endraw %})"
+          description: "CPU usage is above 85% for 5 minutes."
+
+      - alert: LowDiskSpaceRoot
+        expr: (node_filesystem_avail_bytes{mountpoint="/",fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{mountpoint="/",fstype!~"tmpfs|overlay"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on root filesystem ({% raw %}{{ $labels.instance }}{% endraw %})"
+          description: "Available disk space on / is below 15% for 5 minutes."
