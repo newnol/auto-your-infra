@@ -18,6 +18,12 @@ ansible/inventory/inventory.ini
 *.auto.tfvars
 terraform.tfvars
 
+# Ignore duplicate ansible vault locations generated during experiments
+ansible/inventories/group_vars/
+ansible/playbooks/group_vars/
+ansible/inventories/group_vars
+ansible/playbooks/group_vars
+
 # OS
 .DS_Store
 Thumbs.db

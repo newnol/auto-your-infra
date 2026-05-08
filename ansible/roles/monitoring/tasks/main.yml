@@ -1,0 +1,45 @@
+---
+- name: Ensure monitoring services directory exists
+  file:
+    path: /opt/monitoring
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+
+- name: Create required directories for Prometheus and Grafana data
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0777' # Relaxed for testing as Prometheus/Grafana use non-root users internally sometimes
+  loop:
+    - /opt/monitoring/data/prometheus
+    - /opt/monitoring/data/grafana
+
+- name: Copy prometheus.yml
+  template:
+    src: prometheus.yml.j2
+    dest: /opt/monitoring/prometheus.yml
+
+- name: Copy Prometheus alert rules
+  template:
+    src: alerts.yml.j2
+    dest: /opt/monitoring/alerts.yml
+
+- name: Copy alertmanager.yml
+  template:
+    src: alertmanager.yml.j2
+    dest: /opt/monitoring/alertmanager.yml
+
+- name: Copy docker-compose.yml for Monitoring Stack
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/monitoring/docker-compose.yml
+
+- name: Start Monitoring Stack with Docker Compose
+  community.docker.docker_compose_v2:
+    docker_cli: /usr/bin/docker
+    project_src: /opt/monitoring
+    state: present

@@ -3,9 +3,9 @@
   vars_files:
     - ../group_vars/all/secrets.yml
   tasks:
-    - name: Debug Proxmox API credentials
+    - name: Validate Proxmox API credentials are loaded
       debug:
-        msg: "Proxmox API user: {{ proxmox_api_user }}, Password: {{ proxmox_api_pass }}"
+        msg: "Proxmox API user is configured: {{ proxmox_api_user is defined }}"
 
     - name: Example firewall config (placeholder)
       debug:

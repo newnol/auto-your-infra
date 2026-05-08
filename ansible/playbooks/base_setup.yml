@@ -1,0 +1,7 @@
+---
+- name: Setup Base Infrastructure for New Nodes
+  hosts: base
+  become: yes
+  roles:
+    - role: docker
+      tags: ['docker', 'base']

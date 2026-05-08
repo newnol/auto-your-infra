@@ -1,0 +1,32 @@
+---
+- name: Setup NixOS Base Golden Template
+  hosts: nixos-base
+  # Wait for SSH to be available since container was just created
+  gather_facts: no
+  tasks:
+    - name: Wait 10 seconds for target connection to become reachable/usable
+      wait_for_connection:
+        delay: 5
+        timeout: 60
+
+    - name: Ensure target runs NixOS
+      raw: "test -f /etc/nixos/configuration.nix"
+      register: is_nixos
+      failed_when: is_nixos.rc != 0
+
+    - name: Inject Docker configuration into NixOS configuration
+      raw: |
+        if ! grep -q "virtualisation.docker.enable" /etc/nixos/configuration.nix; then
+          sed -i '/environment.systemPackages = with pkgs; \[/i \ \ virtualisation.docker.enable = true;' /etc/nixos/configuration.nix
+        fi
+      register: modify_config
+
+    - name: Rebuild NixOS with Docker enabled
+      raw: "nixos-rebuild switch"
+      register: rebuild_status
+      when: modify_config.rc == 0
+      
+    - name: Show rebuild status
+      debug:
+        var: rebuild_status.stdout_lines
+      when: rebuild_status.rc == 0
